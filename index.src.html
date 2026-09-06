@@ -8,11 +8,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; background: #161514; color: #c4bfb5; line-height: 1.9; }
 h1 { color: #d4a853; font-weight: 300; font-size: 1.8rem; margin-bottom: 0.3rem; }
-.subtitle { color: #6b665e; font-size: 0.85rem; margin-bottom: 1.5rem; }
-#unlock { background: #1e1d1c; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; }
-#unlock input { width: 100%; background: #161514; color: #c4bfb5; border: 1px solid #333; border-radius: 6px; padding: 0.9rem; font-size: 1rem; outline: none; }
-#unlock input:focus { border-color: #d4a853; }
-#app { display: none; }
+.subtitle { color: #6b665e; font-size: 0.85rem; margin-bottom: 2.5rem; }
 .entry { padding: 1.2rem 1.4rem; margin-bottom: 0.8rem; background: #1e1d1c; border-radius: 8px; cursor: pointer; transition: background 0.2s; border-left: 3px solid transparent; }
 .entry:hover { background: #252423; border-left-color: #d4a853; }
 .entry .date { font-size: 0.78rem; color: #6b665e; margin-bottom: 0.2rem; }
@@ -25,8 +21,8 @@ h1 { color: #d4a853; font-weight: 300; font-size: 1.8rem; margin-bottom: 0.3rem;
 .delete-btn:hover { color: #c44; }
 #editor-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 1rem; }
 #editor { background: #1e1d1c; border-radius: 12px; padding: 2rem; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
-#editor input, #editor textarea { width: 100%; background: #161514; color: #c4bfb5; border: 1px solid #333; border-radius: 6px; padding: 0.9rem; font-size: 1rem; margin-bottom: 0.8rem; outline: none; }
-#editor textarea { min-height: 220px; resize: vertical; line-height: 1.8; }
+#editor input { width: 100%; background: #161514; color: #c4bfb5; border: 1px solid #333; border-radius: 6px; padding: 0.9rem; font-size: 1rem; margin-bottom: 0.8rem; outline: none; }
+#editor textarea { width: 100%; min-height: 220px; background: #161514; color: #c4bfb5; border: 1px solid #333; border-radius: 6px; padding: 1rem; font-size: 0.95rem; resize: vertical; outline: none; line-height: 1.8; }
 #editor input:focus, #editor textarea:focus { border-color: #d4a853; }
 .btn-row { margin-top: 1rem; display: flex; gap: 0.6rem; }
 .btn { padding: 0.6rem 1.4rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; border: none; }
@@ -35,25 +31,15 @@ h1 { color: #d4a853; font-weight: 300; font-size: 1.8rem; margin-bottom: 0.3rem;
 .btn-secondary { background: #333; color: #c4bfb5; }
 .btn-secondary:hover { background: #444; }
 #writeBtn { position: fixed; bottom: 2rem; right: 2rem; background: #d4a853; color: #161514; border: none; padding: 0.9rem 1.8rem; border-radius: 50px; cursor: pointer; font-size: 0.95rem; box-shadow: 0 4px 16px rgba(212,168,83,0.25); font-weight: 500; }
-#writeBtn:hover { background: #e0b85c; }
+#writeBtn:hover { background: #e0b85c; transform: translateY(-1px); }
 .empty { text-align: center; color: #6b665e; margin-top: 4rem; font-size: 0.95rem; }
 </style>
 </head>
 <body>
-
-<div id="unlock">
-  <p class="subtitle">🔐 输入密码解锁日记</p>
-  <input id="masterPassword" type="password" placeholder="密码" onkeydown="if(event.key==='Enter')unlock()">
-  <div class="btn-row"><button class="btn btn-primary" onclick="unlock()">解锁</button></div>
-</div>
-
-<div id="app">
-  <h1>安静日记</h1>
-  <p class="subtitle">一个没人能闯进来的房间。</p>
-  <div id="entries"></div>
-  <div id="empty" class="empty" style="display:none;">还没有写过日记，点击右下角开始第一篇。</div>
-</div>
-
+<h1>安静日记</h1>
+<p class="subtitle">一个没人能闯进来的房间。</p>
+<div id="entries"></div>
+<div id="empty" class="empty" style="display:none;">还没有写过日记，点击右下角开始第一篇。</div>
 <div id="editor-mask">
   <div id="editor">
     <input id="entryTitle" placeholder="标题（可选）">
@@ -65,45 +51,9 @@ h1 { color: #d4a853; font-weight: 300; font-size: 1.8rem; margin-bottom: 0.3rem;
   </div>
 </div>
 <button id="writeBtn" onclick="openEditor()">+ 写日记</button>
-
 <script>
-// ========== Web Crypto API ==========
-async function deriveKey(password, salt) {
-  const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']);
-  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
-}
-async function encryptText(password, plaintext) {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await deriveKey(password, salt);
-  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext));
-  const combined = new Uint8Array(salt.length + iv.length + ciphertext.byteLength);
-  combined.set(salt, 0); combined.set(iv, salt.length); combined.set(new Uint8Array(ciphertext), salt.length + iv.length);
-  return btoa(String.fromCharCode(...combined));
-}
-async function decryptText(password, b64Data) {
-  const combined = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
-  const salt = combined.slice(0, 16), iv = combined.slice(16, 28), ciphertext = combined.slice(28);
-  const key = await deriveKey(password, salt);
-  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
-  return new TextDecoder().decode(decrypted);
-}
-
-// ========== 全局状态 ==========
-let MASTER_PASSWORD = '';
 const today = new Date().toISOString().split('T')[0];
 
-function unlock() {
-  const pwd = document.getElementById('masterPassword').value;
-  if (!pwd) return alert('请输入密码');
-  MASTER_PASSWORD = pwd;
-  document.getElementById('unlock').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  loadEntries();
-}
-
-// ========== 日记操作 ==========
 async function loadEntries() {
   try {
     const res = await fetch('/diary/api/list');
@@ -115,38 +65,53 @@ async function loadEntries() {
       return;
     }
     empty.style.display = 'none';
-    // 解密每条日记的标题和内容
-    for (const e of entries) {
-      try { e.title = await decryptText(MASTER_PASSWORD, e.title); } catch(_) {}
-      try { e.content = await decryptText(MASTER_PASSWORD, e.content); } catch(_) {}
-    }
     container.innerHTML = entries.map(e => `<div class="entry" onclick="toggleEntry(this)"><div class="date">${e.date}</div><div class="title">${e.title || '(无标题)'}</div><div class="content">${e.content}</div><div class="actions"><button class="delete-btn" onclick="event.stopPropagation();deleteEntry('${e.date}')">删除</button></div></div>`).join('');
   } catch(e) { console.error(e); }
 }
+
 function toggleEntry(el) { el.classList.toggle('open'); }
+
 function openEditor() {
   document.getElementById('editor-mask').style.display = 'flex';
   document.getElementById('entryTitle').value = '';
   document.getElementById('entryContent').value = '';
   document.getElementById('entryTitle').focus();
 }
+
 function closeEditor() { document.getElementById('editor-mask').style.display = 'none'; }
 
 async function saveEntry() {
   const title = document.getElementById('entryTitle').value.trim();
   const content = document.getElementById('entryContent').value.trim();
   if (!content) { alert('写点什么吧'); return; }
-  const encTitle = title ? await encryptText(MASTER_PASSWORD, title) : '';
-  const encContent = await encryptText(MASTER_PASSWORD, content);
-  await fetch('/diary/api/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: today, title: encTitle, content: encContent }) });
-  closeEditor(); loadEntries();
+  const resp = await fetch('/diary/api/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ date: today, title, content })
+  });
+  if (resp.ok) {
+    closeEditor();
+    loadEntries();
+  } else {
+    alert('保存失败: ' + resp.status);
+  }
 }
+
 async function deleteEntry(date) {
   if (!confirm('确定删除这篇日记？')) return;
-  await fetch('/diary/api/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date }) });
+  await fetch('/diary/api/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ date })
+  });
   loadEntries();
 }
-document.getElementById('editor-mask').addEventListener('click', function(e) { if (e.target === this) closeEditor(); });
+
+document.getElementById('editor-mask').addEventListener('click', function(e) {
+  if (e.target === this) closeEditor();
+});
+
+loadEntries();
 </script>
 </body>
 </html>
