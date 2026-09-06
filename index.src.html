@@ -65,7 +65,9 @@ async function loadEntries() {
       return;
     }
     empty.style.display = 'none';
-    container.innerHTML = entries.map(e => `<div class="entry" onclick="toggleEntry(this)"><div class="date">${e.date}</div><div class="title">${e.title || '(无标题)'}</div><div class="content">${e.content}</div><div class="actions"><button class="delete-btn" onclick="event.stopPropagation();deleteEntry('${e.date}')">删除</button></div></div>`).join('');
+    // 把列表渲染那行改成：
+    container.innerHTML = entries.map(e => `<div class="entry" onclick="toggleEntry(this)"><div class="date">${e.date}</div><div class="title">${e.title || '(无标题)'}</div><div class="content">${e.content}</div><div class="actions"><button class="delete-btn" onclick="event.stopPropagation();deleteEntry('entry:${e.date}:${e.created}')">删除</button></div></div>`).join('');
+
   } catch(e) { console.error(e); }
 }
 
@@ -97,12 +99,12 @@ async function saveEntry() {
   }
 }
 
-async function deleteEntry(date) {
+async function deleteEntry(key) {
   if (!confirm('确定删除这篇日记？')) return;
   await fetch('/diary/api/delete', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ date })
+    body: JSON.stringify({ key })
   });
   loadEntries();
 }
