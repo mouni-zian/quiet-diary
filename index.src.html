@@ -1,0 +1,100 @@
+cd D:\code\quiet-diary
+
+@'
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安静日记</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; background: #161514; color: #c4bfb5; line-height: 1.9; }
+h1 { color: #d4a853; font-weight: 300; font-size: 1.8rem; margin-bottom: 0.3rem; }
+.subtitle { color: #6b665e; font-size: 0.85rem; margin-bottom: 2.5rem; }
+.entry { padding: 1.2rem 1.4rem; margin-bottom: 0.8rem; background: #1e1d1c; border-radius: 8px; cursor: pointer; transition: background 0.2s; border-left: 3px solid transparent; }
+.entry:hover { background: #252423; border-left-color: #d4a853; }
+.entry .date { font-size: 0.78rem; color: #6b665e; margin-bottom: 0.2rem; }
+.entry .title { font-size: 1.02rem; color: #c4bfb5; }
+.entry .content { margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid #2a2928; color: #a8a39a; font-size: 0.95rem; white-space: pre-wrap; display: none; }
+.entry.open .content { display: block; }
+.entry .actions { display: none; margin-top: 0.8rem; }
+.entry.open .actions { display: block; }
+.delete-btn { background: none; border: none; color: #6b665e; cursor: pointer; font-size: 0.8rem; padding: 0; }
+.delete-btn:hover { color: #c44; }
+#editor-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 1rem; }
+#editor { background: #1e1d1c; border-radius: 12px; padding: 2rem; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+#editor input { width: 100%; background: #161514; color: #c4bfb5; border: 1px solid #333; border-radius: 6px; padding: 0.9rem; font-size: 1rem; margin-bottom: 0.8rem; outline: none; }
+#editor textarea { width: 100%; min-height: 220px; background: #161514; color: #c4bfb5; border: 1px solid #333; border-radius: 6px; padding: 1rem; font-size: 0.95rem; resize: vertical; outline: none; line-height: 1.8; }
+#editor input:focus, #editor textarea:focus { border-color: #d4a853; }
+.btn-row { margin-top: 1rem; display: flex; gap: 0.6rem; }
+.btn { padding: 0.6rem 1.4rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; border: none; }
+.btn-primary { background: #d4a853; color: #161514; }
+.btn-primary:hover { background: #e0b85c; }
+.btn-secondary { background: #333; color: #c4bfb5; }
+.btn-secondary:hover { background: #444; }
+#writeBtn { position: fixed; bottom: 2rem; right: 2rem; background: #d4a853; color: #161514; border: none; padding: 0.9rem 1.8rem; border-radius: 50px; cursor: pointer; font-size: 0.95rem; box-shadow: 0 4px 16px rgba(212,168,83,0.25); font-weight: 500; }
+#writeBtn:hover { background: #e0b85c; transform: translateY(-1px); }
+.empty { text-align: center; color: #6b665e; margin-top: 4rem; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+<h1>安静日记</h1>
+<p class="subtitle">一个没人能闯进来的房间。</p>
+<div id="entries"></div>
+<div id="empty" class="empty" style="display:none;">还没有写过日记，点击右下角开始第一篇。</div>
+<div id="editor-mask">
+  <div id="editor">
+    <input id="entryTitle" placeholder="标题（可选）">
+    <textarea id="entryContent" placeholder="今天发生了什么..."></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveEntry()">保存</button>
+      <button class="btn btn-secondary" onclick="closeEditor()">取消</button>
+    </div>
+  </div>
+</div>
+<button id="writeBtn" onclick="openEditor()">+ 写日记</button>
+<script>
+const today = new Date().toISOString().split('T')[0];
+async function loadEntries() {
+  try {
+    const res = await fetch('/api/list');
+    const entries = await res.json();
+    const container = document.getElementById('entries');
+    const empty = document.getElementById('empty');
+    if (!Array.isArray(entries) || entries.length === 0) {
+      empty.style.display = 'block'; container.innerHTML = '';
+      return;
+    }
+    empty.style.display = 'none';
+    container.innerHTML = entries.map(e => `<div class="entry" onclick="toggleEntry(this)"><div class="date">${e.date}</div><div class="title">${e.title || '(无标题)'}</div><div class="content">${e.content}</div><div class="actions"><button class="delete-btn" onclick="event.stopPropagation();deleteEntry('${e.date}')">删除</button></div></div>`).join('');
+  } catch(e) { console.error(e); }
+}
+function toggleEntry(el) { el.classList.toggle('open'); }
+function openEditor() {
+  document.getElementById('editor-mask').style.display = 'flex';
+  document.getElementById('entryTitle').value = '';
+  document.getElementById('entryContent').value = '';
+  document.getElementById('entryTitle').focus();
+}
+function closeEditor() { document.getElementById('editor-mask').style.display = 'none'; }
+async function saveEntry() {
+  const title = document.getElementById('entryTitle').value.trim();
+  const content = document.getElementById('entryContent').value.trim();
+  if (!content) { alert('写点什么吧'); return; }
+  await fetch('/api/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: today, title, content }) });
+  closeEditor(); loadEntries();
+}
+async function deleteEntry(date) {
+  if (!confirm('确定删除这篇日记？')) return;
+  await fetch('/api/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date }) });
+  loadEntries();
+}
+document.getElementById('editor-mask').addEventListener('click', function(e) { if (e.target === this) closeEditor(); });
+loadEntries();
+</script>
+</body>
+</html>
+'@ | Out-File -Encoding utf8 index.src.html
+
+Write-Host "✅ index.src.html 已创建" -ForegroundColor Green
