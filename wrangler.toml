@@ -1,0 +1,7 @@
+name = "quiet-diary"
+pages_build_output_dir = "."
+compatibility_date = "2026-09-06"
+
+[[kv_namespaces]]
+binding = "DIARY_KV"
+id = "把这里替换成你的KV的ID"
