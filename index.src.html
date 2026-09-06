@@ -53,20 +53,20 @@ h1 { color: #d4a853; font-weight: 300; font-size: 1.8rem; margin-bottom: 0.3rem;
 <button id="writeBtn" onclick="openEditor()">+ 写日记</button>
 <script>
 const today = new Date().toISOString().split('T')[0];
+let entriesCache = [];
 
 async function loadEntries() {
   try {
     const res = await fetch('/diary/api/list');
-    const entries = await res.json();
+    entriesCache = await res.json();
     const container = document.getElementById('entries');
     const empty = document.getElementById('empty');
-    if (!Array.isArray(entries) || entries.length === 0) {
+    if (!Array.isArray(entriesCache) || entriesCache.length === 0) {
       empty.style.display = 'block'; container.innerHTML = '';
       return;
     }
     empty.style.display = 'none';
-    // 把列表渲染那行改成：
-    container.innerHTML = entries.map(e => `<div class="entry" onclick="toggleEntry(this)"><div class="date">${e.date}</div><div class="title">${e.title || '(无标题)'}</div><div class="content">${e.content}</div><div class="actions"><button class="delete-btn" onclick="event.stopPropagation();deleteEntry('${e._key}')">删除</button></div></div>`).join('');
+    container.innerHTML = entriesCache.map((e, i) => `<div class="entry" onclick="toggleEntry(this)"><div class="date">${e.date}</div><div class="title">${e.title || '(无标题)'}</div><div class="content">${e.content}</div><div class="actions"><button class="delete-btn" onclick="event.stopPropagation();deleteEntry(${i})">删除</button></div></div>`).join('');
   } catch(e) { console.error(e); }
 }
 
@@ -98,14 +98,21 @@ async function saveEntry() {
   }
 }
 
-async function deleteEntry(key) {
+async function deleteEntry(index) {
+  const entry = entriesCache[index];
+  if (!entry || !entry._key) { alert('删除失败：找不到这条日记'); return; }
   if (!confirm('确定删除这篇日记？')) return;
-  await fetch('/diary/api/delete', {
+  const resp = await fetch('/diary/api/delete', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key })
+    body: JSON.stringify({ key: entry._key })
   });
-  loadEntries();
+  if (resp.ok) {
+    alert('已删除');
+    loadEntries();
+  } else {
+    alert('删除失败: ' + resp.status);
+  }
 }
 
 document.getElementById('editor-mask').addEventListener('click', function(e) {
