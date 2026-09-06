@@ -87,7 +87,7 @@ async function save() {
   await fetch('/diary/api/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content: encrypted })
+    body: JSON.stringify({ date: today, content: encryptedContent })
   });
   document.getElementById('text').value = '';
   load();
