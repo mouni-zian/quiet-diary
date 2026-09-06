@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quiet Diary</title>
+<script src="https://unpkg.com/pagecrypt/dist/pagecrypt.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #1a1a2e; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
@@ -26,7 +27,7 @@ h1 { color: #7f9cf5; margin-bottom: 20px; }
 <div id="auth">
   <h2>Quiet Diary</h2>
   <input type="password" id="pwd" placeholder="Password">
-  <button onclick="checkPwd()">Enter</button>
+  <button onclick="unlock()">Unlock</button>
 </div>
 <div id="app">
   <button id="logout" onclick="logout()">Logout</button>
@@ -38,44 +39,66 @@ h1 { color: #7f9cf5; margin-bottom: 20px; }
   <div id="list"></div>
 </div>
 <script>
-const PWD = 'MyQuietDiary2026!#xK9';
-function checkPwd() {
-  if (document.getElementById('pwd').value === PWD) {
-    localStorage.setItem('auth', '1');
-    document.getElementById('auth').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    load();
-  } else { alert('Wrong password'); }
-}
-function logout() {
-  localStorage.removeItem('auth');
-  location.reload();
-}
-if (localStorage.getItem('auth') === '1') {
+let PASSWORD = '';
+
+async function unlock() {
+  PASSWORD = document.getElementById('pwd').value;
+  if (!PASSWORD) return;
   document.getElementById('auth').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   load();
 }
+
+function logout() {
+  PASSWORD = '';
+  document.getElementById('auth').style.display = 'block';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pwd').value = '';
+}
+
 async function load() {
   const r = await fetch('/api/list');
   const items = await r.json();
-  document.getElementById('list').innerHTML = items.map(e => `
-    <div class="entry">
-      <div class="date">${new Date(+e.id).toLocaleString()}</div>
-      <div class="content">${e.content}</div>
-      <button onclick="del('${e.id}')">Delete</button>
-    </div>
-  `).join('');
+  const listEl = document.getElementById('list');
+  listEl.innerHTML = '';
+  for (const item of items) {
+    let content = '';
+    try {
+      content = await PageCrypt.decrypt(PASSWORD, item.content);
+    } catch (e) {
+      content = '[Decryption failed - wrong password?]';
+    }
+    const div = document.createElement('div');
+    div.className = 'entry';
+    div.innerHTML = `
+      <div class="date">${new Date(+item.id).toLocaleString()}</div>
+      <div class="content"></div>
+      <button onclick="del('${item.id}')">Delete</button>
+    `;
+    div.querySelector('.content').textContent = content;
+    listEl.appendChild(div);
+  }
 }
+
 async function save() {
-  const content = document.getElementById('text').value;
-  if (!content) return;
-  await fetch('/api/save', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({content}) });
+  const text = document.getElementById('text').value;
+  if (!text) return;
+  const encrypted = await PageCrypt.encrypt(PASSWORD, text);
+  await fetch('/api/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content: encrypted })
+  });
   document.getElementById('text').value = '';
   load();
 }
+
 async function del(id) {
-  await fetch('/api/delete', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) });
+  await fetch('/api/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  });
   load();
 }
 </script>
