@@ -6,33 +6,38 @@
 <title>安静日记</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; background: #161514; color: #c4bfb5; line-height: 1.9; }
-h1 { color: #d4a853; font-weight: 300; font-size: 1.8rem; margin-bottom: 0.3rem; }
-.subtitle { color: #6b665e; font-size: 0.85rem; margin-bottom: 2.5rem; }
-.entry { padding: 1.2rem 1.4rem; margin-bottom: 0.8rem; background: #1e1d1c; border-radius: 8px; cursor: pointer; transition: background 0.2s; border-left: 3px solid transparent; }
-.entry:hover { background: #252423; border-left-color: #d4a853; }
-.entry .date { font-size: 0.78rem; color: #6b665e; margin-bottom: 0.2rem; }
-.entry .title { font-size: 1.02rem; color: #c4bfb5; }
-.entry .content { margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid #2a2928; color: #a8a39a; font-size: 0.95rem; white-space: pre-wrap; display: none; }
-.entry.open .content { display: block; }
-.entry .actions { display: none; margin-top: 0.8rem; }
-.entry.open .actions { display: block; }
-.delete-btn { background: none; border: none; color: #6b665e; cursor: pointer; font-size: 0.8rem; padding: 0; }
-.delete-btn:hover { color: #c44; }
-#editor-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 1rem; }
-#editor { background: #1e1d1c; border-radius: 12px; padding: 2rem; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
-#editor input { width: 100%; background: #161514; color: #c4bfb5; border: 1px solid #333; border-radius: 6px; padding: 0.9rem; font-size: 1rem; margin-bottom: 0.8rem; outline: none; }
-#editor textarea { width: 100%; min-height: 220px; background: #161514; color: #c4bfb5; border: 1px solid #333; border-radius: 6px; padding: 1rem; font-size: 0.95rem; resize: vertical; outline: none; line-height: 1.8; }
-#editor input:focus, #editor textarea:focus { border-color: #d4a853; }
-.btn-row { margin-top: 1rem; display: flex; gap: 0.6rem; }
-.btn { padding: 0.6rem 1.4rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; border: none; }
-.btn-primary { background: #d4a853; color: #161514; }
-.btn-primary:hover { background: #e0b85c; }
-.btn-secondary { background: #333; color: #c4bfb5; }
-.btn-secondary:hover { background: #444; }
-#writeBtn { position: fixed; bottom: 2rem; right: 2rem; background: #d4a853; color: #161514; border: none; padding: 0.9rem 1.8rem; border-radius: 50px; cursor: pointer; font-size: 0.95rem; box-shadow: 0 4px 16px rgba(212,168,83,0.25); font-weight: 500; }
-#writeBtn:hover { background: #e0b85c; transform: translateY(-1px); }
-.empty { text-align: center; color: #6b665e; margin-top: 4rem; font-size: 0.95rem; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif; max-width: 520px; margin: 0 auto; padding: 1.2rem 1rem 5rem; background: #f5f5f7; color: #2c2c2c; line-height: 1.8; font-size: 15px; }
+
+h1 { display: none; }
+.subtitle { display: none; }
+
+.entry { background: #ffffff; border-radius: 10px; padding: 1rem 1.1rem 0.8rem; margin-bottom: 0.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.2s; }
+.entry:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.entry .date { font-size: 0.72rem; color: #b0b0b0; margin-bottom: 0.4rem; font-weight: 400; }
+.entry .title { font-size: 0.95rem; font-weight: 600; color: #1a1a1a; margin-bottom: 0.3rem; }
+.entry .content { font-size: 0.93rem; color: #3a3a3a; white-space: pre-wrap; word-break: break-word; }
+.entry .actions { display: flex; justify-content: flex-end; margin-top: 0.5rem; }
+.delete-btn { background: none; border: none; color: #d0d0d0; cursor: pointer; font-size: 0.75rem; padding: 0.2rem 0.4rem; border-radius: 4px; opacity: 0; transition: opacity 0.2s; }
+.entry:hover .delete-btn { opacity: 1; }
+.delete-btn:hover { color: #ff5a5f; background: #fff5f5; }
+
+#editor-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100; justify-content: center; align-items: center; padding: 1rem; }
+#editor { background: #fff; border-radius: 14px; padding: 1.4rem; width: 100%; max-width: 500px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+#editor input { width: 100%; background: #f7f7f8; color: #2c2c2c; border: none; border-radius: 8px; padding: 0.8rem; font-size: 0.95rem; margin-bottom: 0.6rem; outline: none; font-family: inherit; }
+#editor textarea { width: 100%; min-height: 180px; background: #f7f7f8; color: #2c2c2c; border: none; border-radius: 8px; padding: 0.8rem; font-size: 0.93rem; resize: vertical; outline: none; line-height: 1.8; font-family: inherit; }
+#editor input:focus, #editor textarea:focus { background: #f0f0f2; }
+.btn-row { margin-top: 0.8rem; display: flex; gap: 0.5rem; }
+.btn { flex: 1; padding: 0.65rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; border: none; }
+.btn-primary { background: #4a4a4a; color: #fff; font-weight: 500; }
+.btn-primary:hover { background: #333; }
+.btn-secondary { background: #f0f0f2; color: #666; }
+.btn-secondary:hover { background: #e4e4e7; }
+
+#writeBtn { position: fixed; bottom: 1.8rem; right: 1.8rem; width: 56px; height: 56px; background: #4a4a4a; color: #fff; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 12px rgba(0,0,0,0.15); padding: 0; }
+#writeBtn:hover { background: #333; transform: scale(1.05); }
+#writeBtn svg { width: 22px; height: 22px; }
+
+.empty { text-align: center; color: #b0b0b0; margin-top: 4rem; font-size: 0.9rem; }
 </style>
 </head>
 <body>
@@ -50,7 +55,12 @@ h1 { color: #d4a853; font-weight: 300; font-size: 1.8rem; margin-bottom: 0.3rem;
     </div>
   </div>
 </div>
-<button id="writeBtn" onclick="openEditor()">+ 写日记</button>
+<button id="writeBtn" onclick="openEditor()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+    <line x1="12" y1="5" x2="12" y2="19"></line>
+    <line x1="5" y1="12" x2="19" y2="12"></line>
+  </svg>
+</button>
 <script>
 const today = new Date().toISOString().split('T')[0];
 let entriesCache = [];
@@ -66,7 +76,16 @@ async function loadEntries() {
       return;
     }
     empty.style.display = 'none';
-    container.innerHTML = entriesCache.map((e, i) => `<div class="entry" onclick="toggleEntry(this)"><div class="date">${e.date}</div><div class="title">${e.title || '(无标题)'}</div><div class="content">${e.content}</div><div class="actions"><button class="delete-btn" onclick="event.stopPropagation();deleteEntry(${i})">删除</button></div></div>`).join('');
+container.innerHTML = entriesCache.map((e, i) => `
+  <div class="entry">
+    <div class="date">${e.date}</div>
+    ${e.title ? `<div class="title">${e.title}</div>` : ''}
+    <div class="content">${e.content}</div>
+    <div class="actions">
+      <button class="delete-btn" onclick="deleteEntry(${i})">删除</button>
+    </div>
+  </div>
+`).join('');
   } catch(e) { console.error(e); }
 }
 
@@ -100,19 +119,15 @@ async function saveEntry() {
 
 async function deleteEntry(index) {
   const entry = entriesCache[index];
-  if (!entry || !entry._key) { alert('删除失败：找不到这条日记'); return; }
+  if (!entry || !entry._key) return;
   if (!confirm('确定删除这篇日记？')) return;
-  const resp = await fetch('/diary/api/delete', {
+  await fetch('/diary/api/delete', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ key: entry._key })
   });
-  if (resp.ok) {
-    alert('已删除');
-    loadEntries();
-  } else {
-    alert('删除失败: ' + resp.status);
-  }
+  loadEntries();
+}
 }
 
 document.getElementById('editor-mask').addEventListener('click', function(e) {
