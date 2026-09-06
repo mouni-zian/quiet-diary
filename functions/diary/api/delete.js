@@ -1,6 +1,6 @@
 export async function onRequestPost({ request, env }) {
-  const { date } = await request.json();
-  if (!date) return Response.json({ error: 'Missing' }, { status: 400 });
-  await env.DIARY_KV.delete('entry:' + date);
+  const { key } = await request.json();
+  if (!key) return Response.json({ error: 'Missing key' }, { status: 400 });
+  await env.DIARY_KV.delete(key);
   return Response.json({ ok: true });
 }

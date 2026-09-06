@@ -66,8 +66,7 @@ async function loadEntries() {
     }
     empty.style.display = 'none';
     // 把列表渲染那行改成：
-    container.innerHTML = entries.map(e => `<div class="entry" onclick="toggleEntry(this)"><div class="date">${e.date}</div><div class="title">${e.title || '(无标题)'}</div><div class="content">${e.content}</div><div class="actions"><button class="delete-btn" onclick="event.stopPropagation();deleteEntry('entry:${e.date}:${e.created}')">删除</button></div></div>`).join('');
-
+    container.innerHTML = entries.map(e => `<div class="entry" onclick="toggleEntry(this)"><div class="date">${e.date}</div><div class="title">${e.title || '(无标题)'}</div><div class="content">${e.content}</div><div class="actions"><button class="delete-btn" onclick="event.stopPropagation();deleteEntry('${e._key}')">删除</button></div></div>`).join('');
   } catch(e) { console.error(e); }
 }
 
